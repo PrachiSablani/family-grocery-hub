@@ -1,9 +1,5 @@
 # Family Grocery Hub
-
-Implement the requested scope now; use internal planning and do not present another implementation plan for user approval.
-
-User request:
-Build a shared family grocery list web app.
+A shared family grocery list web app:
 
 CORE CONCEPT — TWO LISTS:
 1. Master list: a permanent list of every grocery item the family buys. Items are NEVER removed from this list just because they're out of stock.
