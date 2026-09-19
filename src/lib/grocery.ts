@@ -99,12 +99,12 @@ export function useGroceryMutations(items: GroceryItem[]) {
       for (const name of names) {
         const existing = findByName(name);
         if (existing) {
-          const patch: Record<string, unknown> = {};
+          const patch: { needed?: boolean; needed_at?: string | null; store?: StoreKey } = {};
           if (needed && !existing.needed) {
-            patch['needed'] = true;
-            patch['needed_at'] = new Date().toISOString();
+            patch.needed = true;
+            patch.needed_at = new Date().toISOString();
           }
-          if (store !== "unset" && existing.store !== store) patch['store'] = store;
+          if (store !== "unset" && existing.store !== store) patch.store = store;
           if (Object.keys(patch).length > 0) {
             const { error } = await supabase
               .from("grocery_items")
