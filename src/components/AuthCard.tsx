@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShoppingBasket } from "lucide-react";
+import { Cherry, ShoppingBasket, Sparkles } from "lucide-react";
 
 export function AuthCard() {
   const [email, setEmail] = useState("");
@@ -38,22 +38,28 @@ export function AuthCard() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background px-5 py-10">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-10">
+      <div className="absolute top-8 left-6 rotate-[-10deg] rounded-md border-2 border-foreground bg-sun px-3 py-2 text-sun-foreground shadow-[3px_3px_0_var(--color-foreground)]" aria-hidden="true">
+        <Sparkles className="size-5" />
+      </div>
+      <div className="absolute right-7 bottom-10 rotate-12 rounded-full border-2 border-foreground bg-accent p-3 text-accent-foreground shadow-[3px_3px_0_var(--color-foreground)]" aria-hidden="true">
+        <Cherry className="size-6" />
+      </div>
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <div className="basket-bop mx-auto mb-5 flex size-16 rotate-[-3deg] items-center justify-center rounded-lg border-2 border-foreground bg-primary text-primary-foreground shadow-[5px_5px_0_var(--color-foreground)]">
             <ShoppingBasket className="size-7" />
           </div>
-          <h1 className="font-display text-3xl font-semibold text-foreground">Family Groceries</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h1 className="font-display text-4xl font-extrabold text-foreground">Family Groceries!</h1>
+          <p className="mt-2 font-medium text-muted-foreground">
             One shared list for the whole family.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="rotate-[0.5deg] rounded-lg border-2 border-foreground bg-card p-6 shadow-[7px_7px_0_var(--color-pop)]">
           {sent ? (
             <div className="space-y-3 text-center">
-              <h2 className="font-display text-xl font-semibold text-card-foreground">
+              <h2 className="font-display text-2xl font-extrabold text-card-foreground">
                 Check your email
               </h2>
               <p className="text-sm text-muted-foreground">

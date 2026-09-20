@@ -8,6 +8,8 @@ import {
   Plus,
   Search,
   ShoppingBasket,
+  Sparkles,
+  Store,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -65,7 +67,7 @@ function QuickAdd({
 
   return (
     <form
-      className="rounded-2xl border border-border bg-card p-3 shadow-sm"
+      className="rounded-lg border-2 border-foreground bg-card p-3 shadow-[5px_5px_0_var(--color-sun)]"
       onSubmit={(e) => {
         e.preventDefault();
         if (!raw.trim()) return;
@@ -81,7 +83,7 @@ function QuickAdd({
       />
       <div className="mt-2 flex gap-2">
         <Select value={store} onValueChange={(v) => setStore(v as StoreKey)}>
-          <SelectTrigger className="h-11 flex-1 rounded-xl">
+          <SelectTrigger className="h-11 flex-1 rounded-md border-2 border-foreground bg-background font-semibold">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -92,7 +94,7 @@ function QuickAdd({
             ))}
           </SelectContent>
         </Select>
-        <Button type="submit" className="h-11 rounded-xl px-5" disabled={pending}>
+        <Button type="submit" className="h-11 px-5" disabled={pending}>
           <Plus className="size-4" />
           {cta}
         </Button>
@@ -105,12 +107,33 @@ function QuickAdd({
 }
 
 function StorePill({ store }: { store: StoreKey }) {
+  const storeStyles: Record<StoreKey, string> = {
+    costco: "border-costco bg-costco-soft text-costco",
+    fred_meyer: "border-fred bg-fred-soft text-fred",
+    indian_store: "border-indian bg-indian-soft text-indian",
+    unset: "border-unset bg-unset-soft text-unset",
+  };
   return (
-    <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium tracking-wide text-secondary-foreground uppercase">
+    <span className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-1 text-[11px] font-extrabold tracking-wide uppercase ${storeStyles[store]}`}>
+      <Store className="size-3" />
       {storeLabel(store)}
     </span>
   );
 }
+
+const storeSectionStyles: Record<StoreKey, string> = {
+  costco: "border-costco bg-costco-soft shadow-[5px_5px_0_var(--color-costco)]",
+  fred_meyer: "border-fred bg-fred-soft shadow-[5px_5px_0_var(--color-fred)]",
+  indian_store: "border-indian bg-indian-soft shadow-[5px_5px_0_var(--color-indian)]",
+  unset: "border-unset bg-unset-soft shadow-[5px_5px_0_var(--color-unset)]",
+};
+
+const storeHeadingStyles: Record<StoreKey, string> = {
+  costco: "text-costco",
+  fred_meyer: "text-fred",
+  indian_store: "text-indian",
+  unset: "text-unset",
+};
 
 export function GroceryApp({ session }: { session: Session }) {
   const { data: items = [], isLoading } = useGroceryItems();
@@ -169,13 +192,13 @@ export function GroceryApp({ session }: { session: Session }) {
 
   return (
     <div className="min-h-dvh bg-background pb-24">
-      <header className="sticky top-0 z-20 border-b border-border/70 bg-background/90 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b-2 border-foreground bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-3">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <div className="basket-bop flex size-10 rotate-[-3deg] items-center justify-center rounded-md border-2 border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0_var(--color-foreground)]">
             <ShoppingBasket className="size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-lg leading-tight font-semibold">Family Groceries</h1>
+            <h1 className="font-display text-xl leading-tight font-extrabold">Family Groceries!</h1>
             <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>
           </div>
           <Button variant="ghost" size="icon" className="size-11" onClick={signOut}>
@@ -187,11 +210,11 @@ export function GroceryApp({ session }: { session: Session }) {
 
       <main className="mx-auto max-w-xl px-4 py-4">
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="h-12 w-full rounded-xl p-1">
-            <TabsTrigger value="restock" className="h-10 flex-1 rounded-lg text-sm">
+          <TabsList className="h-14 w-full rounded-lg border-2 border-foreground bg-secondary p-1 shadow-[4px_4px_0_var(--color-foreground)]">
+            <TabsTrigger value="restock" className="h-11 flex-1 rounded-md text-sm font-extrabold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Get next time {restock.length > 0 && `(${restock.length})`}
             </TabsTrigger>
-            <TabsTrigger value="master" className="h-10 flex-1 rounded-lg text-sm">
+            <TabsTrigger value="master" className="h-11 flex-1 rounded-md text-sm font-extrabold data-[state=active]:bg-pop data-[state=active]:text-pop-foreground">
               Master list
             </TabsTrigger>
           </TabsList>
@@ -207,8 +230,9 @@ export function GroceryApp({ session }: { session: Session }) {
             {isLoading ? (
               <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
             ) : restock.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center">
-                <p className="font-display text-lg font-semibold">Nothing to buy</p>
+              <div className="rounded-lg border-2 border-dashed border-foreground bg-accent/30 px-6 py-12 text-center">
+                <Sparkles className="mx-auto mb-3 size-7 text-primary" />
+                <p className="font-display text-xl font-extrabold">Nothing to buy!</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Add what's running out and it'll show up here, grouped by store.
                 </p>
@@ -218,10 +242,11 @@ export function GroceryApp({ session }: { session: Session }) {
                 .filter((g) => g.items.length > 0)
                 .map((group) => (
                   <section key={group.key}>
-                    <h2 className="mb-2 px-1 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                      {group.label} · {group.items.length}
+                    <h2 className={`mb-2 flex items-center gap-2 px-1 font-display text-lg font-extrabold ${storeHeadingStyles[group.key]}`}>
+                      <Store className="size-5" /> {group.label}
+                      <span className="rounded-full bg-card px-2 py-0.5 text-xs text-foreground">{group.items.length}</span>
                     </h2>
-                    <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+                    <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.key]}`}>
                       {group.items.map((item) => (
                         <li key={item.id} className="flex items-center gap-2 p-2 pl-4">
                           <span className="flex-1 truncate text-base">{item.name}</span>
@@ -235,7 +260,7 @@ export function GroceryApp({ session }: { session: Session }) {
                             <span className="sr-only">Edit {item.name}</span>
                           </Button>
                           <Button
-                            className="h-11 rounded-xl px-4"
+                            className="h-11 px-4"
                             onClick={() =>
                               setNeeded.mutate(
                                 { id: item.id, needed: false },
@@ -272,14 +297,14 @@ export function GroceryApp({ session }: { session: Session }) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search items"
-                  className="h-11 rounded-xl pl-9"
+                  className="h-11 rounded-md border-2 border-foreground bg-card pl-9"
                 />
               </div>
               <Select
                 value={storeFilter}
                 onValueChange={(v) => setStoreFilter(v as "all" | StoreKey)}
               >
-                <SelectTrigger className="h-11 w-[9.5rem] rounded-xl">
+                <SelectTrigger className="h-11 w-[9.5rem] rounded-md border-2 border-foreground bg-card font-semibold">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -296,7 +321,7 @@ export function GroceryApp({ session }: { session: Session }) {
             {isLoading ? (
               <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
             ) : masterFiltered.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+              <div className="rounded-lg border-2 border-dashed border-foreground bg-pop/10 px-6 py-12 text-center">
                 <p className="font-display text-lg font-semibold">
                   {items.length === 0 ? "Your master list is empty" : "No matches"}
                 </p>
@@ -307,7 +332,7 @@ export function GroceryApp({ session }: { session: Session }) {
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+              <ul className="divide-y-2 divide-border overflow-hidden rounded-lg border-2 border-foreground bg-card shadow-[5px_5px_0_var(--color-pop)]">
                 {masterFiltered.map((item) => (
                   <li key={item.id} className="flex items-center gap-2 p-2 pl-4">
                     <div className="min-w-0 flex-1">
@@ -337,7 +362,7 @@ export function GroceryApp({ session }: { session: Session }) {
                     {item.needed ? (
                       <Button
                         variant="secondary"
-                        className="h-11 rounded-xl px-4"
+                        className="h-11 px-4"
                         onClick={() => setNeeded.mutate({ id: item.id, needed: false })}
                       >
                         <Undo2 className="size-4" />
@@ -346,7 +371,7 @@ export function GroceryApp({ session }: { session: Session }) {
                     ) : (
                       <Button
                         variant="outline"
-                        className="h-11 rounded-xl px-4"
+                        className="h-11 px-4"
                         onClick={() =>
                           setNeeded.mutate(
                             { id: item.id, needed: true },
