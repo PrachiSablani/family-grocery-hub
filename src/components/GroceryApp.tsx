@@ -51,6 +51,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function QuickAdd({
   placeholder,
@@ -203,13 +209,21 @@ export function GroceryApp({ session }: { session: Session }) {
             <ShoppingBasket className="size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-xl leading-tight font-extrabold">Family Groceries!</h1>
+            <h1 className="font-display text-xl leading-tight font-extrabold">Groceries Hub!</h1>
             <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>
           </div>
-          <Button variant="ghost" size="icon" className="size-11" onClick={signOut}>
-            <LogOut className="size-5" />
-            <span className="sr-only">Sign out</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-11" aria-label="Account menu">
+                <LogOut className="size-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={signOut} className="h-11 cursor-pointer text-sm font-bold">
+                <LogOut className="size-4" /> Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
