@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import {
   Check,
+  ChevronDown,
   LogOut,
   Pencil,
   Plus,
@@ -146,6 +147,10 @@ export function GroceryApp({ session }: { session: Session }) {
   const [editName, setEditName] = useState("");
   const [editStore, setEditStore] = useState<StoreKey>("unset");
   const [deleting, setDeleting] = useState<GroceryItem | null>(null);
+  const [collapsed, setCollapsed] = useState<Partial<Record<StoreKey, boolean>>>({});
+
+  const toggleCollapsed = (key: StoreKey) =>
+    setCollapsed((c) => ({ ...c, [key]: !c[key] }));
 
   const restock = useMemo(() => items.filter((i) => i.needed), [items]);
 
@@ -242,11 +247,21 @@ export function GroceryApp({ session }: { session: Session }) {
                 .filter((g) => g.items.length > 0)
                 .map((group) => (
                   <section key={group.key}>
-                    <h2 className={`mb-2 flex items-center gap-2 px-1 font-display text-lg font-extrabold ${storeHeadingStyles[group.key]}`}>
-                      <Store className="size-5" /> {group.label}
-                      <span className="rounded-full bg-card px-2 py-0.5 text-xs text-foreground">{group.items.length}</span>
-                    </h2>
-                    <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.key]}`}>
+                    <button
+                      type="button"
+                      onClick={() => toggleCollapsed(group.key)}
+                      aria-expanded={!collapsed[group.key]}
+                      className="mb-2 flex w-full items-center gap-2 rounded-md px-1 py-1 text-left"
+                    >
+                      <h2 className={`flex items-center gap-2 font-display text-lg font-extrabold ${storeHeadingStyles[group.key]}`}>
+                        <Store className="size-5" /> {group.label}
+                        <span className="rounded-full bg-card px-2 py-0.5 text-xs text-foreground">{group.items.length}</span>
+                      </h2>
+                      <ChevronDown
+                        className={`ml-auto size-5 transition-transform ${storeHeadingStyles[group.key]} ${collapsed[group.key] ? "-rotate-90" : ""}`}
+                      />
+                    </button>
+                    <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.key]} ${collapsed[group.key] ? "hidden" : ""}`}>
                       {group.items.map((item) => (
                         <li key={item.id} className="flex items-center gap-2 p-2 pl-4">
                           <span className="flex-1 truncate text-base">{item.name}</span>
