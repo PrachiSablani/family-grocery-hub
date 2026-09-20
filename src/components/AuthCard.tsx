@@ -50,7 +50,7 @@ export function AuthCard() {
           <div className="basket-bop mx-auto mb-5 flex size-16 rotate-[-3deg] items-center justify-center rounded-lg border-2 border-foreground bg-primary text-primary-foreground shadow-[5px_5px_0_var(--color-foreground)]">
             <ShoppingBasket className="size-7" />
           </div>
-          <h1 className="font-display text-4xl font-extrabold text-foreground">Family Groceries!</h1>
+          <h1 className="font-display text-4xl font-extrabold text-foreground">Groceries Hub!</h1>
           <p className="mt-2 font-medium text-muted-foreground">
             One shared list for the whole family.
           </p>

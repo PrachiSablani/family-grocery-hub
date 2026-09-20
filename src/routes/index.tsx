@@ -9,13 +9,13 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Family Groceries — shared master & restock lists" },
+      { title: "Groceries Hub — shared master & restock lists" },
       {
         name: "description",
         content:
           "A shared family grocery app: keep a permanent master list and a 'Get next time' restock list grouped by store.",
       },
-      { property: "og:title", content: "Family Groceries — shared master & restock lists" },
+      { property: "og:title", content: "Groceries Hub — shared master & restock lists" },
       {
         property: "og:description",
         content:
