@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import {
   Check,
+  ChevronDown,
   LogOut,
   Pencil,
   Plus,
@@ -146,6 +147,10 @@ export function GroceryApp({ session }: { session: Session }) {
   const [editName, setEditName] = useState("");
   const [editStore, setEditStore] = useState<StoreKey>("unset");
   const [deleting, setDeleting] = useState<GroceryItem | null>(null);
+  const [collapsed, setCollapsed] = useState<Partial<Record<StoreKey, boolean>>>({});
+
+  const toggleCollapsed = (key: StoreKey) =>
+    setCollapsed((c) => ({ ...c, [key]: !c[key] }));
 
   const restock = useMemo(() => items.filter((i) => i.needed), [items]);
 
