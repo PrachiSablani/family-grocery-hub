@@ -28,12 +28,17 @@ export function parseNames(raw: string): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const part of raw.split(/[,\n]/)) {
-    const name = part.trim().replace(/\s+/g, " ");
-    if (!name) continue;
-    const key = name.toLowerCase();
+    const cleaned = part.trim().replace(/\s+/g, " ");
+    if (!cleaned) continue;
+    const key = cleaned.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(name);
+    out.push(
+      cleaned
+        .split(" ")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ")
+    );
   }
   return out;
 }
