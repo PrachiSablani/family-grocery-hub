@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   Check,
   ChevronDown,
+  Copy,
   LogOut,
   Pencil,
   Plus,
@@ -15,6 +16,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Household } from "@/lib/household";
 import {
   STORES,
   storeLabel,
@@ -142,7 +144,7 @@ const storeHeadingStyles: Record<StoreKey, string> = {
   unset: "text-unset",
 };
 
-export function GroceryApp({ session }: { session: Session }) {
+export function GroceryApp({ session, household }: { session: Session; household: Household }) {
   const { data: items = [], isLoading } = useGroceryItems();
   const { addItems, setNeeded, updateItem, deleteItem } = useGroceryMutations(items);
 
@@ -210,7 +212,7 @@ export function GroceryApp({ session }: { session: Session }) {
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="font-display text-xl leading-tight font-extrabold">Groceries Hub!</h1>
-            <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>
+            <p className="truncate text-xs text-muted-foreground">{household.name} · {session.user.email}</p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -218,7 +220,21 @@ export function GroceryApp({ session }: { session: Session }) {
                 <LogOut className="size-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuContent align="end" className="w-60">
+              <div className="px-2 py-2">
+                <p className="text-xs font-bold text-muted-foreground">Family invite code</p>
+                <p className="font-display text-2xl font-extrabold tracking-[0.2em]">{household.invite_code}</p>
+                <p className="text-xs text-muted-foreground">Share it so family can join {household.name}.</p>
+              </div>
+              <DropdownMenuItem
+                onClick={() => {
+                  void navigator.clipboard.writeText(household.invite_code);
+                  toast.success("Invite code copied");
+                }}
+                className="h-11 cursor-pointer text-sm font-bold"
+              >
+                <Copy className="size-4" /> Copy invite code
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={signOut} className="h-11 cursor-pointer text-sm font-bold">
                 <LogOut className="size-4" /> Log out
               </DropdownMenuItem>

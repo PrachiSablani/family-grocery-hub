@@ -4,6 +4,8 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthCard } from "@/components/AuthCard";
 import { GroceryApp } from "@/components/GroceryApp";
+import { HouseholdSetup } from "@/components/HouseholdSetup";
+import { useMyHousehold } from "@/lib/household";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -48,5 +50,15 @@ function Index() {
     return <div className="min-h-dvh bg-background" />;
   }
 
-  return session ? <GroceryApp session={session} /> : <AuthCard />;
+  return session ? <SignedIn session={session} /> : <AuthCard />;
+}
+
+function SignedIn({ session }: { session: Session }) {
+  const { data: household, isLoading, error } = useMyHousehold(session.user.id);
+  if (isLoading) return <div className="min-h-dvh bg-background" />;
+  if (error) {
+    return <p className="p-10 text-center text-sm text-muted-foreground">Could not load your family. Please refresh.</p>;
+  }
+  if (!household) return <HouseholdSetup />;
+  return <GroceryApp session={session} household={household} />;
 }
