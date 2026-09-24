@@ -16,7 +16,7 @@ export function HouseholdSetup() {
     setBusy(true);
     const { error } = await supabase.rpc("create_household", { _name: name });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Family created!");
     refresh();
   }
@@ -26,7 +26,7 @@ export function HouseholdSetup() {
     setBusy(true);
     const { error } = await supabase.rpc("join_household", { _code: code });
     setBusy(false);
-    if (error) return toast.error(error.message.includes("Invalid") ? "That invite code doesn't match any family." : error.message);
+    if (error) { toast.error(error.message.includes("Invalid") ? "That invite code doesn't match any family." : error.message); return; }
     toast.success("You joined the family!");
     refresh();
   }
