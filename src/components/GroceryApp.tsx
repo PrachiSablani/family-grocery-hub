@@ -216,8 +216,8 @@ export function GroceryApp({ session, household }: { session: Session; household
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-11" aria-label="Account menu">
-                <LogOut className="size-5" />
+              <Button variant="ghost" size="icon" className="size-11" aria-label="Family and account menu">
+                <Settings className="size-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
