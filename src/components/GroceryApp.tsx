@@ -9,6 +9,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Settings,
   ShoppingBasket,
   Sparkles,
   Store,
