@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          household_id: string
           id: string
           name: string
           needed: boolean
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          household_id?: string
           id?: string
           name: string
           needed?: boolean
@@ -38,12 +40,74 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          household_id?: string
           id?: string
           name?: string
           needed?: boolean
           needed_at?: string | null
           store?: string
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grocery_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          invite_code: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invite_code?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invite_code?: string
+          name?: string
         }
         Relationships: []
       }
@@ -52,7 +116,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_household: { Args: { _name: string }; Returns: string }
+      join_household: { Args: { _code: string }; Returns: string }
+      my_household_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
