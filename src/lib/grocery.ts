@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type StoreKey = "costco" | "fred_meyer" | "indian_store" | "unset";
+/** A store id (uuid) from household_stores, or "unset". */
+export type StoreKey = string;
 
 export type GroceryItem = {
   id: string;
@@ -14,15 +15,86 @@ export type GroceryItem = {
   updated_at: string;
 };
 
-export const STORES: { key: StoreKey; label: string }[] = [
-  { key: "costco", label: "Costco" },
-  { key: "fred_meyer", label: "Fred Meyer" },
-  { key: "indian_store", label: "Indian store" },
-  { key: "unset", label: "Store not set" },
-];
+export type StoreColor = "red" | "green" | "orange" | "blue" | "pink" | "purple";
+export const STORE_COLORS: StoreColor[] = ["red", "green", "orange", "blue", "pink", "purple"];
 
-export const storeLabel = (key: StoreKey) =>
-  STORES.find((s) => s.key === key)?.label ?? "Store not set";
+export type HouseholdStore = { id: string; name: string; color: StoreColor; sort_order: number };
+export type StoreOption = { key: StoreKey; label: string; color: StoreColor };
+
+export const UNSET_STORE: StoreOption = { key: "unset", label: "Store not set", color: "purple" };
+
+const STORES_KEY = ["household_stores"];
+
+export function useStores() {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: STORES_KEY,
+    queryFn: async (): Promise<HouseholdStore[]> => {
+      const { data, error } = await supabase
+        .from("household_stores")
+        .select("id, name, color, sort_order")
+        .order("sort_order")
+        .order("created_at");
+      if (error) throw error;
+      return (data ?? []) as HouseholdStore[];
+    },
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("household_stores_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "household_stores" }, () => {
+        queryClient.invalidateQueries({ queryKey: STORES_KEY });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const options: StoreOption[] = [
+    ...(query.data ?? []).map((s) => ({ key: s.id, label: s.name, color: s.color })),
+    UNSET_STORE,
+  ];
+  return { ...query, options };
+}
+
+export function useStoreMutations(stores: HouseholdStore[]) {
+  const queryClient = useQueryClient();
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: STORES_KEY });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+  };
+  const addStore = useMutation({
+    mutationFn: async ({ name, color }: { name: string; color: StoreColor }) => {
+      const sort = Math.max(0, ...stores.map((s) => s.sort_order)) + 1;
+      const { error } = await supabase
+        .from("household_stores")
+        .insert({ name: name.trim(), color, sort_order: sort });
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+  const updateStore = useMutation({
+    mutationFn: async ({ id, name, color }: { id: string; name: string; color: StoreColor }) => {
+      const { error } = await supabase
+        .from("household_stores")
+        .update({ name: name.trim(), color })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+  const deleteStore = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("household_stores").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+  return { addStore, updateStore, deleteStore };
+}
 
 export function parseNames(raw: string): string[] {
   const seen = new Set<string>();

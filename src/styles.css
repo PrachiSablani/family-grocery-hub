@@ -73,6 +73,10 @@
   --color-indian-soft: var(--indian-soft);
   --color-unset: var(--unset);
   --color-unset-soft: var(--unset-soft);
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-pink: var(--pink);
+  --color-pink-soft: var(--pink-soft);
 }
 
 :root {
@@ -108,6 +112,10 @@
   --indian-soft: oklch(0.95 0.06 72);
   --unset: oklch(0.54 0.11 280);
   --unset-soft: oklch(0.94 0.04 285);
+  --blue: oklch(0.52 0.16 250);
+  --blue-soft: oklch(0.94 0.04 245);
+  --pink: oklch(0.58 0.2 350);
+  --pink-soft: oklch(0.95 0.045 350);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
