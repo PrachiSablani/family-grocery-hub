@@ -19,13 +19,16 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Household } from "@/lib/household";
 import {
-  STORES,
-  storeLabel,
+  UNSET_STORE,
   useGroceryItems,
   useGroceryMutations,
+  useStores,
   type GroceryItem,
+  type StoreColor,
   type StoreKey,
+  type StoreOption,
 } from "@/lib/grocery";
+import { StoresDialog } from "@/components/StoresDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,14 +69,17 @@ function QuickAdd({
   cta,
   onAdd,
   pending,
+  options,
 }: {
   placeholder: string;
   cta: string;
   onAdd: (raw: string, store: StoreKey) => void;
   pending: boolean;
+  options: StoreOption[];
 }) {
   const [raw, setRaw] = useState("");
   const [store, setStore] = useState<StoreKey>("unset");
+  const value = options.some((o) => o.key === store) ? store : "unset";
 
   return (
     <form
@@ -81,7 +87,7 @@ function QuickAdd({
       onSubmit={(e) => {
         e.preventDefault();
         if (!raw.trim()) return;
-        onAdd(raw, store);
+        onAdd(raw, value);
         setRaw("");
       }}
     >
@@ -92,12 +98,12 @@ function QuickAdd({
         className="h-12 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
       />
       <div className="mt-2 flex gap-2">
-        <Select value={store} onValueChange={(v) => setStore(v as StoreKey)}>
+        <Select value={value} onValueChange={setStore}>
           <SelectTrigger className="h-11 flex-1 rounded-md border-2 border-foreground bg-background font-semibold">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {STORES.map((s) => (
+            {options.map((s) => (
               <SelectItem key={s.key} value={s.key}>
                 {s.label}
               </SelectItem>
@@ -116,38 +122,48 @@ function QuickAdd({
   );
 }
 
-function StorePill({ store }: { store: StoreKey }) {
-  const storeStyles: Record<StoreKey, string> = {
-    costco: "border-costco bg-costco-soft text-costco",
-    fred_meyer: "border-fred bg-fred-soft text-fred",
-    indian_store: "border-indian bg-indian-soft text-indian",
-    unset: "border-unset bg-unset-soft text-unset",
-  };
+const pillStyles: Record<StoreColor, string> = {
+  red: "border-costco bg-costco-soft text-costco",
+  green: "border-fred bg-fred-soft text-fred",
+  orange: "border-indian bg-indian-soft text-indian",
+  blue: "border-blue bg-blue-soft text-blue",
+  pink: "border-pink bg-pink-soft text-pink",
+  purple: "border-unset bg-unset-soft text-unset",
+};
+
+function StorePill({ store }: { store: StoreOption }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-1 text-[11px] font-extrabold tracking-wide uppercase ${storeStyles[store]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-1 text-[11px] font-extrabold tracking-wide uppercase ${pillStyles[store.color]}`}>
       <Store className="size-3" />
-      {storeLabel(store)}
+      {store.label}
     </span>
   );
 }
 
-const storeSectionStyles: Record<StoreKey, string> = {
-  costco: "border-costco bg-costco-soft shadow-[5px_5px_0_var(--color-costco)]",
-  fred_meyer: "border-fred bg-fred-soft shadow-[5px_5px_0_var(--color-fred)]",
-  indian_store: "border-indian bg-indian-soft shadow-[5px_5px_0_var(--color-indian)]",
-  unset: "border-unset bg-unset-soft shadow-[5px_5px_0_var(--color-unset)]",
+const storeSectionStyles: Record<StoreColor, string> = {
+  red: "border-costco bg-costco-soft shadow-[5px_5px_0_var(--color-costco)]",
+  green: "border-fred bg-fred-soft shadow-[5px_5px_0_var(--color-fred)]",
+  orange: "border-indian bg-indian-soft shadow-[5px_5px_0_var(--color-indian)]",
+  blue: "border-blue bg-blue-soft shadow-[5px_5px_0_var(--color-blue)]",
+  pink: "border-pink bg-pink-soft shadow-[5px_5px_0_var(--color-pink)]",
+  purple: "border-unset bg-unset-soft shadow-[5px_5px_0_var(--color-unset)]",
 };
 
-const storeHeadingStyles: Record<StoreKey, string> = {
-  costco: "text-costco",
-  fred_meyer: "text-fred",
-  indian_store: "text-indian",
-  unset: "text-unset",
+const storeHeadingStyles: Record<StoreColor, string> = {
+  red: "text-costco",
+  green: "text-fred",
+  orange: "text-indian",
+  blue: "text-blue",
+  pink: "text-pink",
+  purple: "text-unset",
 };
 
 export function GroceryApp({ session, household }: { session: Session; household: Household }) {
   const { data: items = [], isLoading } = useGroceryItems();
   const { addItems, setNeeded, updateItem, deleteItem } = useGroceryMutations(items);
+  const { data: stores = [], options: STORES } = useStores();
+  const [storesOpen, setStoresOpen] = useState(false);
+  const optionFor = (key: StoreKey) => STORES.find((s) => s.key === key) ?? UNSET_STORE;
 
   const [tab, setTab] = useState("restock");
   const [search, setSearch] = useState("");
