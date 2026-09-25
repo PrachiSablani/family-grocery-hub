@@ -189,8 +189,9 @@ export function GroceryApp({ session, household }: { session: Session; household
   }, [items, search, storeFilter]);
 
   const grouped = useMemo(
-    () => STORES.map((s) => ({ ...s, items: restock.filter((i) => i.store === s.key) })),
-    [restock],
+    () => STORES.map((s) => ({ ...s, items: restock.filter((i) => optionFor(i.store).key === s.key) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [restock, STORES],
   );
 
   function handleAdd(raw: string, store: StoreKey, needed: boolean) {
@@ -213,7 +214,7 @@ export function GroceryApp({ session, household }: { session: Session; household
   function openEdit(item: GroceryItem) {
     setEditing(item);
     setEditName(item.name);
-    setEditStore(item.store);
+    setEditStore(optionFor(item.store).key);
   }
 
   async function signOut() {
@@ -252,6 +253,9 @@ export function GroceryApp({ session, household }: { session: Session; household
               >
                 <Copy className="size-4" /> Copy invite code
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStoresOpen(true)} className="h-11 cursor-pointer text-sm font-bold">
+                <Store className="size-4" /> Manage stores
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={signOut} className="h-11 cursor-pointer text-sm font-bold">
                 <LogOut className="size-4" /> Log out
               </DropdownMenuItem>
@@ -276,6 +280,7 @@ export function GroceryApp({ session, household }: { session: Session; household
               placeholder="Running out of…"
               cta="Add"
               pending={addItems.isPending}
+              options={STORES}
               onAdd={(raw, store) => handleAdd(raw, store, true)}
             />
 
@@ -300,15 +305,15 @@ export function GroceryApp({ session, household }: { session: Session; household
                       aria-expanded={!collapsed[group.key]}
                       className="mb-2 flex w-full items-center gap-2 rounded-md px-1 py-1 text-left"
                     >
-                      <h2 className={`flex items-center gap-2 font-display text-lg font-extrabold ${storeHeadingStyles[group.key]}`}>
+                      <h2 className={`flex items-center gap-2 font-display text-lg font-extrabold ${storeHeadingStyles[group.color]}`}>
                         <Store className="size-5" /> {group.label}
                         <span className="rounded-full bg-card px-2 py-0.5 text-xs text-foreground">{group.items.length}</span>
                       </h2>
                       <ChevronDown
-                        className={`ml-auto size-5 transition-transform ${storeHeadingStyles[group.key]} ${collapsed[group.key] ? "-rotate-90" : ""}`}
+                        className={`ml-auto size-5 transition-transform ${storeHeadingStyles[group.color]} ${collapsed[group.key] ? "-rotate-90" : ""}`}
                       />
                     </button>
-                    <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.key]} ${collapsed[group.key] ? "hidden" : ""}`}>
+                    <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.color]} ${collapsed[group.key] ? "hidden" : ""}`}>
                       {group.items.map((item) => (
                         <li key={item.id} className="flex items-center gap-2 p-2 pl-4">
                           <span className="flex-1 truncate text-base">{item.name}</span>
@@ -349,6 +354,7 @@ export function GroceryApp({ session, household }: { session: Session; household
               placeholder="Add an item we buy…"
               cta="Add"
               pending={addItems.isPending}
+              options={STORES}
               onAdd={(raw, store) => handleAdd(raw, store, false)}
             />
 
@@ -400,7 +406,7 @@ export function GroceryApp({ session, household }: { session: Session; household
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-base">{item.name}</p>
                       <div className="mt-1">
-                        <StorePill store={item.store} />
+                        <StorePill store={optionFor(item.store)} />
                       </div>
                     </div>
                     <Button
@@ -509,6 +515,8 @@ export function GroceryApp({ session, household }: { session: Session; household
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StoresDialog open={storesOpen} onOpenChange={setStoresOpen} stores={stores} />
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent className="rounded-2xl">
