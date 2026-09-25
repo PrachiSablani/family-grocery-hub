@@ -19,13 +19,16 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Household } from "@/lib/household";
 import {
-  STORES,
-  storeLabel,
+  UNSET_STORE,
   useGroceryItems,
   useGroceryMutations,
+  useStores,
   type GroceryItem,
+  type StoreColor,
   type StoreKey,
+  type StoreOption,
 } from "@/lib/grocery";
+import { StoresDialog } from "@/components/StoresDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,14 +69,17 @@ function QuickAdd({
   cta,
   onAdd,
   pending,
+  options,
 }: {
   placeholder: string;
   cta: string;
   onAdd: (raw: string, store: StoreKey) => void;
   pending: boolean;
+  options: StoreOption[];
 }) {
   const [raw, setRaw] = useState("");
   const [store, setStore] = useState<StoreKey>("unset");
+  const value = options.some((o) => o.key === store) ? store : "unset";
 
   return (
     <form
@@ -81,7 +87,7 @@ function QuickAdd({
       onSubmit={(e) => {
         e.preventDefault();
         if (!raw.trim()) return;
-        onAdd(raw, store);
+        onAdd(raw, value);
         setRaw("");
       }}
     >
@@ -92,12 +98,12 @@ function QuickAdd({
         className="h-12 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
       />
       <div className="mt-2 flex gap-2">
-        <Select value={store} onValueChange={(v) => setStore(v as StoreKey)}>
+        <Select value={value} onValueChange={setStore}>
           <SelectTrigger className="h-11 flex-1 rounded-md border-2 border-foreground bg-background font-semibold">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {STORES.map((s) => (
+            {options.map((s) => (
               <SelectItem key={s.key} value={s.key}>
                 {s.label}
               </SelectItem>
@@ -116,38 +122,48 @@ function QuickAdd({
   );
 }
 
-function StorePill({ store }: { store: StoreKey }) {
-  const storeStyles: Record<StoreKey, string> = {
-    costco: "border-costco bg-costco-soft text-costco",
-    fred_meyer: "border-fred bg-fred-soft text-fred",
-    indian_store: "border-indian bg-indian-soft text-indian",
-    unset: "border-unset bg-unset-soft text-unset",
-  };
+const pillStyles: Record<StoreColor, string> = {
+  red: "border-costco bg-costco-soft text-costco",
+  green: "border-fred bg-fred-soft text-fred",
+  orange: "border-indian bg-indian-soft text-indian",
+  blue: "border-blue bg-blue-soft text-blue",
+  pink: "border-pink bg-pink-soft text-pink",
+  purple: "border-unset bg-unset-soft text-unset",
+};
+
+function StorePill({ store }: { store: StoreOption }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-1 text-[11px] font-extrabold tracking-wide uppercase ${storeStyles[store]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-1 text-[11px] font-extrabold tracking-wide uppercase ${pillStyles[store.color]}`}>
       <Store className="size-3" />
-      {storeLabel(store)}
+      {store.label}
     </span>
   );
 }
 
-const storeSectionStyles: Record<StoreKey, string> = {
-  costco: "border-costco bg-costco-soft shadow-[5px_5px_0_var(--color-costco)]",
-  fred_meyer: "border-fred bg-fred-soft shadow-[5px_5px_0_var(--color-fred)]",
-  indian_store: "border-indian bg-indian-soft shadow-[5px_5px_0_var(--color-indian)]",
-  unset: "border-unset bg-unset-soft shadow-[5px_5px_0_var(--color-unset)]",
+const storeSectionStyles: Record<StoreColor, string> = {
+  red: "border-costco bg-costco-soft shadow-[5px_5px_0_var(--color-costco)]",
+  green: "border-fred bg-fred-soft shadow-[5px_5px_0_var(--color-fred)]",
+  orange: "border-indian bg-indian-soft shadow-[5px_5px_0_var(--color-indian)]",
+  blue: "border-blue bg-blue-soft shadow-[5px_5px_0_var(--color-blue)]",
+  pink: "border-pink bg-pink-soft shadow-[5px_5px_0_var(--color-pink)]",
+  purple: "border-unset bg-unset-soft shadow-[5px_5px_0_var(--color-unset)]",
 };
 
-const storeHeadingStyles: Record<StoreKey, string> = {
-  costco: "text-costco",
-  fred_meyer: "text-fred",
-  indian_store: "text-indian",
-  unset: "text-unset",
+const storeHeadingStyles: Record<StoreColor, string> = {
+  red: "text-costco",
+  green: "text-fred",
+  orange: "text-indian",
+  blue: "text-blue",
+  pink: "text-pink",
+  purple: "text-unset",
 };
 
 export function GroceryApp({ session, household }: { session: Session; household: Household }) {
   const { data: items = [], isLoading } = useGroceryItems();
   const { addItems, setNeeded, updateItem, deleteItem } = useGroceryMutations(items);
+  const { data: stores = [], options: STORES } = useStores();
+  const [storesOpen, setStoresOpen] = useState(false);
+  const optionFor = (key: StoreKey) => STORES.find((s) => s.key === key) ?? UNSET_STORE;
 
   const [tab, setTab] = useState("restock");
   const [search, setSearch] = useState("");
@@ -173,8 +189,9 @@ export function GroceryApp({ session, household }: { session: Session; household
   }, [items, search, storeFilter]);
 
   const grouped = useMemo(
-    () => STORES.map((s) => ({ ...s, items: restock.filter((i) => i.store === s.key) })),
-    [restock],
+    () => STORES.map((s) => ({ ...s, items: restock.filter((i) => optionFor(i.store).key === s.key) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [restock, STORES],
   );
 
   function handleAdd(raw: string, store: StoreKey, needed: boolean) {
@@ -197,7 +214,7 @@ export function GroceryApp({ session, household }: { session: Session; household
   function openEdit(item: GroceryItem) {
     setEditing(item);
     setEditName(item.name);
-    setEditStore(item.store);
+    setEditStore(optionFor(item.store).key);
   }
 
   async function signOut() {
@@ -236,6 +253,9 @@ export function GroceryApp({ session, household }: { session: Session; household
               >
                 <Copy className="size-4" /> Copy invite code
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStoresOpen(true)} className="h-11 cursor-pointer text-sm font-bold">
+                <Store className="size-4" /> Manage stores
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={signOut} className="h-11 cursor-pointer text-sm font-bold">
                 <LogOut className="size-4" /> Log out
               </DropdownMenuItem>
@@ -260,6 +280,7 @@ export function GroceryApp({ session, household }: { session: Session; household
               placeholder="Running out of…"
               cta="Add"
               pending={addItems.isPending}
+              options={STORES}
               onAdd={(raw, store) => handleAdd(raw, store, true)}
             />
 
@@ -284,15 +305,15 @@ export function GroceryApp({ session, household }: { session: Session; household
                       aria-expanded={!collapsed[group.key]}
                       className="mb-2 flex w-full items-center gap-2 rounded-md px-1 py-1 text-left"
                     >
-                      <h2 className={`flex items-center gap-2 font-display text-lg font-extrabold ${storeHeadingStyles[group.key]}`}>
+                      <h2 className={`flex items-center gap-2 font-display text-lg font-extrabold ${storeHeadingStyles[group.color]}`}>
                         <Store className="size-5" /> {group.label}
                         <span className="rounded-full bg-card px-2 py-0.5 text-xs text-foreground">{group.items.length}</span>
                       </h2>
                       <ChevronDown
-                        className={`ml-auto size-5 transition-transform ${storeHeadingStyles[group.key]} ${collapsed[group.key] ? "-rotate-90" : ""}`}
+                        className={`ml-auto size-5 transition-transform ${storeHeadingStyles[group.color]} ${collapsed[group.key] ? "-rotate-90" : ""}`}
                       />
                     </button>
-                    <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.key]} ${collapsed[group.key] ? "hidden" : ""}`}>
+                    <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.color]} ${collapsed[group.key] ? "hidden" : ""}`}>
                       {group.items.map((item) => (
                         <li key={item.id} className="flex items-center gap-2 p-2 pl-4">
                           <span className="flex-1 truncate text-base">{item.name}</span>
@@ -333,6 +354,7 @@ export function GroceryApp({ session, household }: { session: Session; household
               placeholder="Add an item we buy…"
               cta="Add"
               pending={addItems.isPending}
+              options={STORES}
               onAdd={(raw, store) => handleAdd(raw, store, false)}
             />
 
@@ -384,7 +406,7 @@ export function GroceryApp({ session, household }: { session: Session; household
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-base">{item.name}</p>
                       <div className="mt-1">
-                        <StorePill store={item.store} />
+                        <StorePill store={optionFor(item.store)} />
                       </div>
                     </div>
                     <Button
@@ -493,6 +515,8 @@ export function GroceryApp({ session, household }: { session: Session; household
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StoresDialog open={storesOpen} onOpenChange={setStoresOpen} stores={stores} />
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent className="rounded-2xl">
