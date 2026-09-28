@@ -505,7 +505,7 @@ export function GroceryApp({ session, household }: { session: Session; household
                       setEditing(null);
                       toast.success("Item updated");
                     },
-                    onError: () => toast.error("That item name already exists."),
+                    onError: () => toast.error("That item already exists at this store."),
                   },
                 );
               }}
