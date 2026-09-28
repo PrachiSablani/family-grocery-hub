@@ -108,9 +108,11 @@ const titleCase = (s: string) =>
 export function parseEntry(part: string): { name: string; quantity: string } {
   const cleaned = part.trim().replace(/\s+/g, " ");
   const m = cleaned.match(QTY_RE);
-  if (m && (/\d/.test(m[1]) || /\s/.test(m[1].trim()))) {
-    const q = m[1].trim().replace(/\s*x$/i, "").toLowerCase();
-    return { name: titleCase(m[2]), quantity: q };
+  const qty = m?.[1]?.trim() ?? "";
+  const rest = m?.[2] ?? "";
+  const separated = /\s/.test(cleaned.charAt(qty.length)) || /[a-z.]$/i.test(qty);
+  if (qty && rest && separated && (/\d/.test(qty) || /\s/.test(qty))) {
+    return { name: titleCase(rest), quantity: qty.replace(/\s*x$/i, "").toLowerCase() };
   }
   return { name: titleCase(cleaned), quantity: "" };
 }
