@@ -11,6 +11,7 @@ export type GroceryItem = {
   store: StoreKey;
   needed: boolean;
   needed_at: string | null;
+  quantity: string;
   created_at: string;
   updated_at: string;
 };
@@ -96,23 +97,43 @@ export function useStoreMutations(stores: HouseholdStore[]) {
   return { addStore, updateStore, deleteStore };
 }
 
-export function parseNames(raw: string): string[] {
+const UNITS =
+  "lbs?|pounds?|oz|ounces?|kg|kgs|g|grams?|gal|gallons?|l|liters?|litres?|ml|qt|quarts?|pt|pints?|dozen|doz|packs?|pkgs?|packages?|bags?|boxes|box|cans?|bottles?|jars?|bunch(?:es)?|heads?|loaf|loaves|cartons?|cups?|pcs?|pieces?|x";
+const QTY_RE = new RegExp(`^((?:\\d+(?:[./]\\d+)?|a|an|one|two|three|four|five|six)\\s*(?:(?:${UNITS})\\b\\.?)?)\\s*(?:of\\s+)?(.+)$`, "i");
+
+const titleCase = (s: string) =>
+  s.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+
+/** "2 avocados" -> { name: "Avocados", quantity: "2" } */
+export function parseEntry(part: string): { name: string; quantity: string } {
+  const cleaned = part.trim().replace(/\s+/g, " ");
+  const m = cleaned.match(QTY_RE);
+  const qty = m?.[1]?.trim() ?? "";
+  const rest = m?.[2] ?? "";
+  const separated = /\s/.test(cleaned.charAt(qty.length)) || /[a-z.]$/i.test(qty);
+  if (qty && rest && separated && (/\d/.test(qty) || /\s/.test(qty))) {
+    return { name: titleCase(rest), quantity: qty.replace(/\s*x$/i, "").toLowerCase() };
+  }
+  return { name: titleCase(cleaned), quantity: "" };
+}
+
+export function parseEntries(raw: string): { name: string; quantity: string }[] {
   const seen = new Set<string>();
-  const out: string[] = [];
+  const out: { name: string; quantity: string }[] = [];
   for (const part of raw.split(/[,\n]/)) {
-    const cleaned = part.trim().replace(/\s+/g, " ");
-    if (!cleaned) continue;
-    const key = cleaned.toLowerCase();
+    if (!part.trim()) continue;
+    const e = parseEntry(part);
+    if (!e.name) continue;
+    const key = e.name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(
-      cleaned
-        .split(" ")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ")
-    );
+    out.push(e);
   }
   return out;
+}
+
+export function parseNames(raw: string): string[] {
+  return parseEntries(raw).map((e) => e.name);
 }
 
 const QUERY_KEY = ["grocery_items"];
@@ -172,15 +193,16 @@ export function useGroceryMutations(items: GroceryItem[]) {
       store: StoreKey;
       needed: boolean;
     }) => {
-      const names = parseNames(raw);
-      if (names.length === 0) return { added: 0, updated: 0 };
+      const entries = parseEntries(raw);
+      if (entries.length === 0) return { added: 0, updated: 0 };
       let added = 0;
       let updated = 0;
 
-      for (const name of names) {
+      for (const { name, quantity } of entries) {
         const existing = findByName(name, store);
         if (existing) {
-          const patch: { needed?: boolean; needed_at?: string | null; store?: StoreKey } = {};
+          const patch: { needed?: boolean; needed_at?: string | null; store?: StoreKey; quantity?: string } = {};
+          if (quantity && existing.quantity !== quantity) patch.quantity = quantity;
           if (needed && !existing.needed) {
             patch.needed = true;
             patch.needed_at = new Date().toISOString();
@@ -198,6 +220,7 @@ export function useGroceryMutations(items: GroceryItem[]) {
           const { error } = await supabase.from("grocery_items").insert({
             name,
             store,
+            quantity,
             needed,
             needed_at: needed ? new Date().toISOString() : null,
           });
@@ -222,10 +245,10 @@ export function useGroceryMutations(items: GroceryItem[]) {
   });
 
   const updateItem = useMutation({
-    mutationFn: async ({ id, name, store }: { id: string; name: string; store: StoreKey }) => {
+    mutationFn: async ({ id, name, store, quantity }: { id: string; name: string; store: StoreKey; quantity?: string }) => {
       const { error } = await supabase
         .from("grocery_items")
-        .update({ name: name.trim(), store })
+        .update({ name: name.trim(), store, ...(quantity !== undefined ? { quantity: quantity.trim() } : {}) })
         .eq("id", id);
       if (error) throw error;
     },
