@@ -96,23 +96,41 @@ export function useStoreMutations(stores: HouseholdStore[]) {
   return { addStore, updateStore, deleteStore };
 }
 
-export function parseNames(raw: string): string[] {
+const UNITS =
+  "lbs?|pounds?|oz|ounces?|kg|kgs|g|grams?|gal|gallons?|l|liters?|litres?|ml|qt|quarts?|pt|pints?|dozen|doz|packs?|pkgs?|packages?|bags?|boxes|box|cans?|bottles?|jars?|bunch(?:es)?|heads?|loaf|loaves|cartons?|cups?|pcs?|pieces?|x";
+const QTY_RE = new RegExp(`^((?:\\d+(?:[./]\\d+)?|a|an|one|two|three|four|five|six)\\s*(?:(?:${UNITS})\\b\\.?)?)\\s*(?:of\\s+)?(.+)$`, "i");
+
+const titleCase = (s: string) =>
+  s.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+
+/** "2 avocados" -> { name: "Avocados", quantity: "2" } */
+export function parseEntry(part: string): { name: string; quantity: string } {
+  const cleaned = part.trim().replace(/\s+/g, " ");
+  const m = cleaned.match(QTY_RE);
+  if (m && /\d/.test(m[1]) || (m && /\s/.test(m[1].trim()))) {
+    let q = m[1].trim().replace(/\s*x$/i, "").toLowerCase();
+    return { name: titleCase(m[2]), quantity: q };
+  }
+  return { name: titleCase(cleaned), quantity: "" };
+}
+
+export function parseEntries(raw: string): { name: string; quantity: string }[] {
   const seen = new Set<string>();
-  const out: string[] = [];
+  const out: { name: string; quantity: string }[] = [];
   for (const part of raw.split(/[,\n]/)) {
-    const cleaned = part.trim().replace(/\s+/g, " ");
-    if (!cleaned) continue;
-    const key = cleaned.toLowerCase();
+    if (!part.trim()) continue;
+    const e = parseEntry(part);
+    if (!e.name) continue;
+    const key = e.name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(
-      cleaned
-        .split(" ")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ")
-    );
+    out.push(e);
   }
   return out;
+}
+
+export function parseNames(raw: string): string[] {
+  return parseEntries(raw).map((e) => e.name);
 }
 
 const QUERY_KEY = ["grocery_items"];

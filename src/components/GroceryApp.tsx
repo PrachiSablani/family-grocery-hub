@@ -279,7 +279,7 @@ export function GroceryApp({ session, household }: { session: Session; household
 
           <TabsContent value="restock" className="mt-4 space-y-4">
             <QuickAdd
-              placeholder="Running out of…"
+              placeholder="e.g. 2 avocados, 1 gallon milk"
               cta="Add"
               pending={addItems.isPending}
               options={STORES}
@@ -356,7 +356,7 @@ export function GroceryApp({ session, household }: { session: Session; household
 
           <TabsContent value="master" className="mt-4 space-y-4">
             <QuickAdd
-              placeholder="Add an item we buy…"
+              placeholder="e.g. 3 lbs potatoes, eggs"
               cta="Add"
               pending={addItems.isPending}
               options={STORES}
