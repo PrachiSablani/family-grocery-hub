@@ -170,6 +170,7 @@ export function GroceryApp({ session, household }: { session: Session; household
   const [storeFilter, setStoreFilter] = useState<"all" | StoreKey>("all");
   const [editing, setEditing] = useState<GroceryItem | null>(null);
   const [editName, setEditName] = useState("");
+  const [editQty, setEditQty] = useState("");
   const [editStore, setEditStore] = useState<StoreKey>("unset");
   const [deleting, setDeleting] = useState<GroceryItem | null>(null);
   const [collapsed, setCollapsed] = useState<Partial<Record<StoreKey, boolean>>>({});
@@ -214,6 +215,7 @@ export function GroceryApp({ session, household }: { session: Session; household
   function openEdit(item: GroceryItem) {
     setEditing(item);
     setEditName(item.name);
+    setEditQty(item.quantity ?? "");
     setEditStore(optionFor(item.store).key);
   }
 
@@ -316,7 +318,10 @@ export function GroceryApp({ session, household }: { session: Session; household
                     <ul className={`divide-y-2 divide-border overflow-hidden rounded-lg border-2 ${storeSectionStyles[group.color]} ${collapsed[group.key] ? "hidden" : ""}`}>
                       {group.items.map((item) => (
                         <li key={item.id} className="flex items-center gap-2 p-2 pl-4">
-                          <span className="flex-1 truncate text-base">{item.name}</span>
+                          <span className="flex min-w-0 flex-1 items-center gap-2 text-base">
+                            <span className="truncate">{item.name}</span>
+                            {item.quantity && <QtyBadge q={item.quantity} />}
+                          </span>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -404,7 +409,10 @@ export function GroceryApp({ session, household }: { session: Session; household
                 {masterFiltered.map((item) => (
                   <li key={item.id} className="flex items-center gap-2 p-2 pl-4">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base">{item.name}</p>
+                      <p className="flex items-center gap-2 text-base">
+                        <span className="truncate">{item.name}</span>
+                        {item.quantity && <QtyBadge q={item.quantity} />}
+                      </p>
                       <div className="mt-1">
                         <StorePill store={optionFor(item.store)} />
                       </div>
@@ -477,6 +485,16 @@ export function GroceryApp({ session, household }: { session: Session; household
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="edit-qty">Quantity (optional)</Label>
+              <Input
+                id="edit-qty"
+                value={editQty}
+                placeholder="e.g. 2, 3 lbs, 1 gallon"
+                onChange={(e) => setEditQty(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="edit-store">Store</Label>
               <Select value={editStore} onValueChange={(v) => setEditStore(v as StoreKey)}>
                 <SelectTrigger id="edit-store" className="h-12">
@@ -499,7 +517,7 @@ export function GroceryApp({ session, household }: { session: Session; household
               onClick={() => {
                 if (!editing) return;
                 updateItem.mutate(
-                  { id: editing.id, name: editName, store: editStore },
+                  { id: editing.id, name: editName, store: editStore, quantity: editQty },
                   {
                     onSuccess: () => {
                       setEditing(null);
