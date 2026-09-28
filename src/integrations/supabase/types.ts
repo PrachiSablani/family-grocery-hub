@@ -23,6 +23,7 @@ export type Database = {
           name: string
           needed: boolean
           needed_at: string | null
+          quantity: string
           store: string
           updated_at: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           name: string
           needed?: boolean
           needed_at?: string | null
+          quantity?: string
           store?: string
           updated_at?: string
         }
@@ -45,6 +47,7 @@ export type Database = {
           name?: string
           needed?: boolean
           needed_at?: string | null
+          quantity?: string
           store?: string
           updated_at?: string
         }
