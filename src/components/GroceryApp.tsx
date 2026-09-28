@@ -73,11 +73,12 @@ function QuickAdd({
 }: {
   placeholder: string;
   cta: string;
-  onAdd: (raw: string, store: StoreKey) => void;
+  onAdd: (raw: string, quantity: string, store: StoreKey) => void;
   pending: boolean;
   options: StoreOption[];
 }) {
   const [raw, setRaw] = useState("");
+  const [qty, setQty] = useState("");
   const [store, setStore] = useState<StoreKey>("unset");
   const value = options.some((o) => o.key === store) ? store : "unset";
 
@@ -87,16 +88,26 @@ function QuickAdd({
       onSubmit={(e) => {
         e.preventDefault();
         if (!raw.trim()) return;
-        onAdd(raw, value);
+        onAdd(raw, qty, value);
         setRaw("");
+        setQty("");
       }}
     >
-      <Input
-        value={raw}
-        onChange={(e) => setRaw(e.target.value)}
-        placeholder={placeholder}
-        className="h-12 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
-      />
+      <div className="flex gap-2">
+        <Input
+          value={raw}
+          onChange={(e) => setRaw(e.target.value)}
+          placeholder={placeholder}
+          className="h-12 min-w-0 flex-1 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
+        />
+        <Input
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          placeholder="Qty (optional)"
+          aria-label="Quantity (optional)"
+          className="h-12 w-28 shrink-0 border-0 bg-transparent text-base shadow-none placeholder:text-xs focus-visible:ring-0"
+        />
+      </div>
       <div className="mt-2 flex gap-2">
         <Select value={value} onValueChange={setStore}>
           <SelectTrigger className="h-11 flex-1 rounded-md border-2 border-foreground bg-background font-semibold">
@@ -116,7 +127,7 @@ function QuickAdd({
         </Button>
       </div>
       <p className="mt-2 px-1 text-xs text-muted-foreground">
-        Add several at once, separated by commas: milk, eggs, bread
+        Add several at once, separated by commas: milk, eggs, bread. Quantity applies to every item added.
       </p>
     </form>
   );
@@ -195,9 +206,9 @@ export function GroceryApp({ session, household }: { session: Session; household
     [restock, STORES],
   );
 
-  function handleAdd(raw: string, store: StoreKey, needed: boolean) {
+  function handleAdd(raw: string, quantity: string, store: StoreKey, needed: boolean) {
     addItems.mutate(
-      { raw, store, needed },
+      { raw, quantity, store, needed },
       {
         onSuccess: (res) => {
           const total = res.added + res.updated;
@@ -279,11 +290,11 @@ export function GroceryApp({ session, household }: { session: Session; household
 
           <TabsContent value="restock" className="mt-4 space-y-4">
             <QuickAdd
-              placeholder="e.g. 2 avocados, 1 gallon milk"
+              placeholder="e.g. avocados, milk"
               cta="Add"
               pending={addItems.isPending}
               options={STORES}
-              onAdd={(raw, store) => handleAdd(raw, store, true)}
+              onAdd={(raw, quantity, store) => handleAdd(raw, quantity, store, true)}
             />
 
             {isLoading ? (
@@ -356,11 +367,11 @@ export function GroceryApp({ session, household }: { session: Session; household
 
           <TabsContent value="master" className="mt-4 space-y-4">
             <QuickAdd
-              placeholder="e.g. 3 lbs potatoes, eggs"
+              placeholder="e.g. potatoes, eggs"
               cta="Add"
               pending={addItems.isPending}
               options={STORES}
-              onAdd={(raw, store) => handleAdd(raw, store, false)}
+              onAdd={(raw, quantity, store) => handleAdd(raw, quantity, store, false)}
             />
 
             <div className="flex gap-2">
