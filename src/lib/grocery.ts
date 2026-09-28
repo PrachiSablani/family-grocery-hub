@@ -155,8 +155,12 @@ export function useGroceryMutations(items: GroceryItem[]) {
   const queryClient = useQueryClient();
   const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEY });
 
-  const findByName = (name: string) =>
-    items.find((i) => i.name.toLowerCase() === name.toLowerCase());
+  // Items are unique per (store, name). With no store picked, reuse any existing item by that name.
+  const findByName = (name: string, store: StoreKey) => {
+    const same = items.filter((i) => i.name.toLowerCase() === name.toLowerCase());
+    if (store === "unset") return same.find((i) => i.needed) ?? same[0];
+    return same.find((i) => i.store === store) ?? same.find((i) => i.store === "unset");
+  };
 
   const addItems = useMutation({
     mutationFn: async ({
@@ -174,7 +178,7 @@ export function useGroceryMutations(items: GroceryItem[]) {
       let updated = 0;
 
       for (const name of names) {
-        const existing = findByName(name);
+        const existing = findByName(name, store);
         if (existing) {
           const patch: { needed?: boolean; needed_at?: string | null; store?: StoreKey } = {};
           if (needed && !existing.needed) {
