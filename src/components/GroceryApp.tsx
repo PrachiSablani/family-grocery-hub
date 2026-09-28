@@ -566,3 +566,11 @@ export function GroceryApp({ session, household }: { session: Session; household
     </div>
   );
 }
+
+function QtyBadge({ q }: { q: string }) {
+  return (
+    <span className="shrink-0 rounded-md border-2 border-foreground bg-secondary px-1.5 py-0.5 text-xs font-bold text-secondary-foreground">
+      {/^\d+(\.\d+)?$/.test(q) ? `${q}×` : q}
+    </span>
+  );
+}
