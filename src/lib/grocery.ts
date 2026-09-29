@@ -186,23 +186,26 @@ export function useGroceryMutations(items: GroceryItem[]) {
   const addItems = useMutation({
     mutationFn: async ({
       raw,
+      quantity,
       store,
       needed,
     }: {
       raw: string;
+      quantity: string;
       store: StoreKey;
       needed: boolean;
     }) => {
-      const entries = parseEntries(raw);
-      if (entries.length === 0) return { added: 0, updated: 0 };
+      const names = splitNames(raw);
+      if (names.length === 0) return { added: 0, updated: 0 };
+      const qty = quantity.trim();
       let added = 0;
       let updated = 0;
 
-      for (const { name, quantity } of entries) {
+      for (const name of names) {
         const existing = findByName(name, store);
         if (existing) {
           const patch: { needed?: boolean; needed_at?: string | null; store?: StoreKey; quantity?: string } = {};
-          if (quantity && existing.quantity !== quantity) patch.quantity = quantity;
+          if (qty && existing.quantity !== qty) patch.quantity = qty;
           if (needed && !existing.needed) {
             patch.needed = true;
             patch.needed_at = new Date().toISOString();
@@ -220,7 +223,7 @@ export function useGroceryMutations(items: GroceryItem[]) {
           const { error } = await supabase.from("grocery_items").insert({
             name,
             store,
-            quantity,
+            quantity: qty,
             needed,
             needed_at: needed ? new Date().toISOString() : null,
           });
