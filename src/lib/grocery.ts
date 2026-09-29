@@ -97,43 +97,22 @@ export function useStoreMutations(stores: HouseholdStore[]) {
   return { addStore, updateStore, deleteStore };
 }
 
-const UNITS =
-  "lbs?|pounds?|oz|ounces?|kg|kgs|g|grams?|gal|gallons?|l|liters?|litres?|ml|qt|quarts?|pt|pints?|dozen|doz|packs?|pkgs?|packages?|bags?|boxes|box|cans?|bottles?|jars?|bunch(?:es)?|heads?|loaf|loaves|cartons?|cups?|pcs?|pieces?|x";
-const QTY_RE = new RegExp(`^((?:\\d+(?:[./]\\d+)?|a|an|one|two|three|four|five|six)\\s*(?:(?:${UNITS})\\b\\.?)?)\\s*(?:of\\s+)?(.+)$`, "i");
-
 const titleCase = (s: string) =>
   s.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 
-/** "2 avocados" -> { name: "Avocados", quantity: "2" } */
-export function parseEntry(part: string): { name: string; quantity: string } {
-  const cleaned = part.trim().replace(/\s+/g, " ");
-  const m = cleaned.match(QTY_RE);
-  const qty = m?.[1]?.trim() ?? "";
-  const rest = m?.[2] ?? "";
-  const separated = /\s/.test(cleaned.charAt(qty.length)) || /[a-z.]$/i.test(qty);
-  if (qty && rest && separated && (/\d/.test(qty) || /\s/.test(qty))) {
-    return { name: titleCase(rest), quantity: qty.replace(/\s*x$/i, "").toLowerCase() };
-  }
-  return { name: titleCase(cleaned), quantity: "" };
-}
-
-export function parseEntries(raw: string): { name: string; quantity: string }[] {
+/** Split a quick-add blob ("milk, eggs, bread") into deduped Title Case names. */
+export function splitNames(raw: string): string[] {
   const seen = new Set<string>();
-  const out: { name: string; quantity: string }[] = [];
+  const out: string[] = [];
   for (const part of raw.split(/[,\n]/)) {
-    if (!part.trim()) continue;
-    const e = parseEntry(part);
-    if (!e.name) continue;
-    const key = e.name.toLowerCase();
+    const name = titleCase(part.trim().replace(/\s+/g, " "));
+    if (!name) continue;
+    const key = name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(e);
+    out.push(name);
   }
   return out;
-}
-
-export function parseNames(raw: string): string[] {
-  return parseEntries(raw).map((e) => e.name);
 }
 
 const QUERY_KEY = ["grocery_items"];
